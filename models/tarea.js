@@ -1,19 +1,12 @@
-const { v4: uudiv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 
 class Tarea {
-    
-    id = '';
-    desc = '';
-    completadoEn = null;
-
-    constructor( desc ) {
-
-        this.id = uudiv4();
+    constructor(desc, usuarioId) {
+        this.id = uuidv4();
         this.desc = desc;
         this.completadoEn = null;
-
+        this.usuarioId = usuarioId; // Almacena el ID del usuario
     }
-
 }
 
 module.exports = Tarea;

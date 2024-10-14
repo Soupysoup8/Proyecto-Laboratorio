@@ -158,11 +158,37 @@ const confirmar = async( message ) => {
     return ok;
 }
 
+// Menú de usuarios
+const menuUsuarioOpts = [
+    {
+        type: "list",
+        name: "opcion",
+        message: "¿Qué desea hacer?",
+        choices: [
+            { value: "1", name: `${"1.".red} Crear usuario` },
+            { value: "2", name: `${"2.".red} Iniciar sesión` },
+            { value: "0", name: `${"0.".red} Salir` }
+        ]
+    }
+];
+
+const inquirerMenuUsuario = async () => {
+    console.clear();
+    console.log('=========================='.green);
+    console.log('  Seleccione una opción'.white);
+    console.log('==========================\n'.green);
+
+    const { opcion } = await inquirer.prompt(menuUsuarioOpts);
+    return opcion;
+}
+
+// Exportando las funciones
 module.exports = {
     inquirerMenu,
+    inquirerMenuUsuario,
     pausa,
     leerInput,
     listadoTareasBorrar,
     confirmar,
     mostrarListadoChecklist
-}
+};

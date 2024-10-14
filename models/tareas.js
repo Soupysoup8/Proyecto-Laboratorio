@@ -37,14 +37,21 @@ class Tareas {
         });
     }
 
+    cargarTareasPorUsuario(usuarioId) {
+        return Object.values(this._listado).filter(tarea => tarea.usuarioId === usuarioId);
+    }
+
     /* Se guarda toda la información de la nueva tarea en un
     objeto dónde la clave es el id. */
-    crearTarea( desc = '' ) {
-
+    crearTarea(desc = '', usuarioId) {
         const tarea = new Tarea(desc);
+        tarea.usuarioId = usuarioId; // asignar el id del usuario a la tarea
         this._listado[tarea.id] = tarea;
     }
 
+    filtrarTareasPorUsuario(usuarioId) {
+        return this.listadoArr.filter(tarea => tarea.usuarioId === usuarioId);
+    }
 
     /* Mustra el listado completo solo con las
     propiedades de la descripción de la tarea y 
@@ -54,49 +61,42 @@ class Tareas {
     para poder usarlo luego.
     Dependiendo del estado se encontrará un texto de completado
     o pendiente con los colores verde y rojo respectivamente*/
-    listadoCompleto() {
-        
+    listadoCompleto(usuarioId) {
         console.log();
-        this.listadoArr.forEach( (tarea, i) => {
+        const tareasUsuario = this.filtrarTareasPorUsuario(usuarioId); // Filtrar tareas por usuario
 
+        tareasUsuario.forEach((tarea, i) => {
             const idx = `${i + 1}.`.green;
             const { desc, completadoEn } = tarea;
-            const estado = ( completadoEn ) 
-                                ? 'Completada'.green
-                                : 'Pendiente'.red;
-
-            console.log(`${ idx } ${ desc } :: ${ estado }`);
-
-        });         
+            const estado = (completadoEn) ? 'Completada'.green : 'Pendiente'.red;
+            console.log(`${idx} ${desc} :: ${estado}`);
+        });
     }
 
     
-    listarPendientesCompletadas( completadas = true ) {
-
+    listarPendientesCompletadas(completadas = true, usuarioId) {
         console.log();
         let contador = 0;
-        this.listadoArr.forEach( tarea => {
+        const tareasUsuario = this.filtrarTareasPorUsuario(usuarioId); // Filtrar tareas por usuario
 
+        tareasUsuario.forEach(tarea => {
             const { desc, completadoEn } = tarea;
-            const estado = ( completadoEn ) 
-                                ? 'Completada'.green
-                                : 'Pendiente'.red;
-            if ( completadas ) {
-                // mostrar completadas
-                if ( completadoEn ) {
+            const estado = (completadoEn) ? 'Completada'.green : 'Pendiente'.red;
+
+            if (completadas) {
+                // Mostrar completadas
+                if (completadoEn) {
                     contador += 1;
-                    console.log(`${ (contador + '.').green } ${ desc } :: ${ completadoEn.green }`);
+                    console.log(`${(contador + '.').green} ${desc} :: ${completadoEn.green}`);
                 }
             } else {
-                // mostrar pendientes
-                if ( !completadoEn ) {
+                // Mostrar pendientes
+                if (!completadoEn) {
                     contador += 1;
-                    console.log(`${ (contador + '.').green } ${ desc } :: ${ estado }`);
+                    console.log(`${(contador + '.').green} ${desc} :: ${estado}`);
                 }
             }
-
-        });     
-
+        });
     }
 
     toggleCompletadas( ids = [] ) {
