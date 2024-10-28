@@ -117,16 +117,20 @@ const listadoTareasBorrar = async( tareas = []) => {
 
     const preguntas = [
         {
-            type: "list",
-            name: "id",
-            message: "Borrar",
+            type: "checkbox", // Changed to 'checkbox' to allow multiple selections
+            name: "ids", // Updated the name to reflect multiple IDs
+            message: "Seleccione las tareas a borrar:",
             choices
         }
     ]
 
-    const { id } = await inquirer.prompt(preguntas);
+    const { ids } = await inquirer.prompt(preguntas);
 
-    return id;
+    if (ids.includes("0")) {
+        return []; // or handle cancellation appropriately
+    }
+
+    return ids;
 }
 
 const mostrarListadoChecklist = async( tareas = []) => {

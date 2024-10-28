@@ -24,10 +24,12 @@ class Tareas {
         this._listado = {};
     }
 
-    borrarTarea( id = "" ){
-        if ( this._listado[id]){
-            delete this._listado[id]
-        }
+    borrarTarea(ids = []) {
+        ids.forEach(id => {
+            if (this._listado[id]) {
+                delete this._listado[id];
+            }
+        });
     }
 
     cargarTareasFromArray( tareas = [] ) {
@@ -54,11 +56,9 @@ class Tareas {
     }
 
     /* Mustra el listado completo solo con las
-    propiedades de la descripción de la tarea y 
-    el estado de esta.
-    Se genera un número para cada tarea (iteración)
-    y luego desenglosa tareas en desc y en el esstado 
-    para poder usarlo luego.
+    propiedades de la descripción de la tarea y el estado de esta.
+    Se genera un número para cada tarea (iteración) y luego desenglosa 
+    tareas en desc y en el estado para poder usarlo luego.
     Dependiendo del estado se encontrará un texto de completado
     o pendiente con los colores verde y rojo respectivamente*/
     listadoCompleto(usuarioId) {
