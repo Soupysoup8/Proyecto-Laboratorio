@@ -3,6 +3,7 @@ const { guardarDB, leerDB } = require("./helpers/guardarArchivo");
 const { 
   inquirerMenu,
   inquirerMenuUsuario,
+  esconderContr,
   pausa,
   leerInput,
   listadoTareasBorrar,
@@ -31,14 +32,14 @@ const main = async () => {
       case '1':
         // Crear usuario
         const nombreUsuario = await leerInput('Nombre de usuario:');
-        const password = await leerInput('Contraseña:');
+        const password = await esconderContr({ message: 'Contraseña:' });
         usuariosModel.crearUsuario(nombreUsuario, password); // Método para crear un usuario
         break;
 
       case '2':
         // Iniciar sesión
         const usuario = await leerInput('Nombre de usuario:');
-        const pass = await leerInput('Contraseña:');
+        const pass = await esconderContr({ message: 'Contraseña:' });
         const inicioSesion = usuariosModel.iniciarSesion(usuario, pass); // Método para iniciar sesión
 
         if (inicioSesion) {

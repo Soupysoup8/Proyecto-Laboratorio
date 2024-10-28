@@ -85,6 +85,17 @@ const leerInput = async( message ) => {
     return desc;
 }
 
+// Mask the password
+const esconderContr = async ({ message }) => {
+    const { password } = await inquirer.prompt([{
+        type: 'password',
+        name: 'password',
+        message,
+        mask: '*',
+    }]);
+    return password;
+};
+
 const listadoTareasBorrar = async( tareas = []) => {
     
     const choices = tareas.map( (tarea, i) =>{
@@ -186,6 +197,7 @@ const inquirerMenuUsuario = async () => {
 module.exports = {
     inquirerMenu,
     inquirerMenuUsuario,
+    esconderContr,
     pausa,
     leerInput,
     listadoTareasBorrar,
