@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,7 +13,11 @@
   "license": "ISC",
   "dependencies": {
     "colors": "^1.4.0",
+    "colorts": "^0.1.63",
     "inquirer": "^7.3.3",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
   }
 }

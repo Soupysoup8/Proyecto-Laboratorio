@@ -3,14 +3,42 @@
     {
       "nombre": "Hola",
       "password": "Hola"
+    },
+    {
+      "nombre": "skibidi",
+      "password": "lol"
     }
   ],
   "tareas": [
     {
       "id": "349b80a6-b058-4e00-bef1-1327644829dc",
       "desc": "Hola",
-      "completadoEn": null,
+      "completadoEn": false,
       "usuarioId": "Hola"
+    },
+    {
+      "id": "10f439bf-8919-4b96-b31a-242eac94270c",
+      "desc": "fg",
+      "completadoEn": false,
+      "usuarioId": "skibidi"
+    },
+    {
+      "id": "25df721e-688c-4eea-a898-d390536e601c",
+      "desc": "ghgf",
+      "completadoEn": false,
+      "usuarioId": "skibidi"
+    },
+    {
+      "id": "fd0d57c7-48de-4851-8b2a-a90981a4019f",
+      "desc": "dfg",
+      "completadoEn": "2024-10-29T13:35:27.773Z",
+      "usuarioId": "skibidi"
+    },
+    {
+      "id": "b7630c55-0523-43fa-a564-81f3a3b74ce3",
+      "desc": "dfgdf",
+      "completadoEn": false,
+      "usuarioId": "skibidi"
     }
   ]
 }
