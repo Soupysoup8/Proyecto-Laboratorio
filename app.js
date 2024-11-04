@@ -1,5 +1,5 @@
 require("colors");
-const { guardarDB, leerDB } = require("./helpers/guardarArchivo");
+const { guardarDB, leerDB } = require("./db/operacionesDB");
 const { 
   inquirerMenu,
   inquirerMenuUsuario,
@@ -10,89 +10,97 @@ const {
   mostrarListadoChecklist
 } = require("./helpers/inquirer");
 
+const Usuario = require("./models/usuarios"); // Corrección aquí
 const Tareas = require("./models/tareas");
-const Usuarios = require("./models/usuarios"); // Importar tu modelo de usuarios
+const sequelize = require('./config/database');
 
 const main = async () => {
-  // Leer usuarios y tareas desde el archivo
-  const { usuarios, tareas } = leerDB();
+  // Sincronizar la base de datos al inicio
+  await sequelize.sync();
+
+  // Leer usuarios y tareas desde la base de datos
   const tareasModel = new Tareas();
-  tareasModel.cargarTareasFromArray(tareas);
-  const usuariosModel = new Usuarios();
-  usuariosModel.usuarios = usuarios; // Cargar usuarios en la instancia
+  await tareasModel.cargarTareasDesdeDB();
 
   let opt = '';
-  
+
   do {
-    // Menú de usuario
     const opcionUsuario = await inquirerMenuUsuario();
 
     switch (opcionUsuario) {
-      case '1':
-        // Crear usuario
-        const nombreUsuario = await leerInput('Nombre de usuario:');
-        const password = await leerInput('Contraseña:');
-        usuariosModel.crearUsuario(nombreUsuario, password); // Método para crear un usuario
-        break;
+      case '1': // Crear usuario
+    const nombreUsuario = await leerInput('Nombre de usuario:');
 
-      case '2':
-        // Iniciar sesión
+    // Verificar si el usuario ya existe
+    const usuarioExistente = await Usuario.findOne({ where: { nombre: nombreUsuario } });
+    if (usuarioExistente) {
+        console.log('El nombre de usuario ya está en uso. Por favor elige otro.');
+        break;
+    }
+
+    const password = await leerInput('Contraseña:');
+
+    try {
+        // Crear el nuevo usuario
+        const nuevoUsuario = await Usuario.create({ nombre: nombreUsuario, password }); // Guardar en la DB
+        console.log('Usuario creado con éxito:', nuevoUsuario.nombre);
+        
+        // Obtener el usuarioId para usar en tareas futuras
+        const usuarioId = nuevoUsuario.id; // Obtén el ID del nuevo usuario
+        console.log(`El ID del usuario creado es: ${usuarioId}`);
+        
+        // Aquí puedes llamar a la función para crear una tarea
+        // Por ejemplo: await tareas.crearTarea('Descripción de la nueva tarea', usuarioId);
+    } catch (error) {
+        console.error('Error al crear el usuario:', error.message);
+    }
+    break;
+
+
+      case '2': // Iniciar sesión
         const usuario = await leerInput('Nombre de usuario:');
         const pass = await leerInput('Contraseña:');
-        const inicioSesion = usuariosModel.iniciarSesion(usuario, pass); // Método para iniciar sesión
 
-        if (inicioSesion) {
+        // Búsqueda del usuario
+        const usuarioActivo = await Usuario.findOne({ where: { nombre: usuario, password: pass } });
+        if (usuarioActivo) {
           console.log("Inicio de sesión exitoso");
+          const usuarioId = usuarioActivo.nombre;
 
-          // Obtener el usuario activo
-          const usuarioActivo = usuariosModel.usuarios.find(user => user.nombre === usuario);
-          const usuarioId = usuarioActivo.nombre; // Cambiado para usar el nombre como ID
-
-          // Mostrar el menú de tareas
           do {
             opt = await inquirerMenu();
-
             switch (opt) {
               case '1':
-                // Crear tarea
                 const desc = await leerInput('Descripción:');
-                tareasModel.crearTarea(desc, usuarioId);
+                await tareasModel.crearTarea(desc, usuarioId);
                 break;
-
               case '2':
-                // Todo el listado de tareas
                 tareasModel.listadoCompleto(usuarioId);
                 break;
-
-              case '3': // Listar completadas
+              case '3':
                 tareasModel.listarPendientesCompletadas(true, usuarioId);
                 break;
-
-              case '4': // Listar pendientes
+              case '4':
                 tareasModel.listarPendientesCompletadas(false, usuarioId);
                 break;
-
-              case '5': // Completar || Pendiente
+              case '5':
                 const ids = await mostrarListadoChecklist(tareasModel.filtrarTareasPorUsuario(usuarioId));
                 tareasModel.toggleCompletadas(ids);
                 break;
-
-              case '6': // Borrar tarea
+              case '6':
                 const id = await listadoTareasBorrar(tareasModel.filtrarTareasPorUsuario(usuarioId));
                 if (id !== "0") {
                   const ok = await confirmar("¿Está seguro?");
                   if (ok) {
-                    tareasModel.borrarTarea(id);
+                    await tareasModel.borrarTarea(id);
                     console.log("Tarea borrada");
                   }
                 }
                 break;
             }
 
-            // Guardar usuarios y tareas en el archivo
-            guardarDB(usuariosModel.usuarios, tareasModel.listadoArr);
+            await tareasModel.guardarTareasDB();
             await pausa();
-
           } while (opt !== "0");
         } else {
           console.log("Credenciales incorrectas");
@@ -106,6 +114,6 @@ const main = async () => {
 
     await pausa();
   } while (opt !== "0");
-}
+};
 
 main();

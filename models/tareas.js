@@ -1,70 +1,89 @@
 const { green, red } = require("colors");
-const Tarea = require("./tarea");
+const { Tarea, TareaClass } = require("./tarea"); // Importar el modelo Tarea
 
 class Tareas {
     _listado = {};
-
-    get listadoArr() {
-
-        /* Objects.key convierte el listado a un arreglo
-        es decir que, si tuviera solo un console.log(key) 
-        mostraria solamente el id de la tarea en lugar 
-        de todo el objeto que es tarea.*/
-        const listado = [];
-        Object.keys(this._listado).forEach( key => {
-            const tarea = this._listado[key];
-            listado.push( tarea );
-        });
-    
-        return listado;
-
-    }
 
     constructor() {
         this._listado = {};
     }
 
-    borrarTarea( id = "" ){
-        if ( this._listado[id]){
-            delete this._listado[id]
+    // Getter para obtener el listado como un array
+    get listadoArr() {
+        return Object.values(this._listado); // Convierte el objeto _listado a un array
+    }
+
+    // Cargar tareas desde la base de datos
+    async cargarTareasDesdeDB() {
+        try {
+            const tareas = await Tarea.findAll({ raw: true });
+            this.cargarTareasFromArray(tareas);
+        } catch (error) {
+            console.error(red('Error al cargar tareas de la base de datos:'), error.message);
         }
     }
 
-    cargarTareasFromArray( tareas = [] ) {
-        
-        tareas.forEach( tarea => {
-            this._listado[tarea.id] = tarea;
+    // Cargar tareas desde un array
+    cargarTareasFromArray(tareas = []) {
+        tareas.forEach(tarea => {
+            this._listado[tarea.id] = tarea; // Asigna cada tarea al listado en memoria
         });
     }
 
-    cargarTareasPorUsuario(usuarioId) {
-        return Object.values(this._listado).filter(tarea => tarea.usuarioId === usuarioId);
+    // Crear una nueva tarea
+    async crearTarea(desc = '', usuarioId) {
+        try {
+            // Verifica que usuarioId esté definido
+            if (!usuarioId) {
+                console.error(red('Error: usuarioId no está definido.'));
+                return; // Salimos si usuarioId no es válido
+            }
+    
+            // Muestra en consola los valores que se van a usar
+            console.log('Creando tarea con:', { desc, usuarioId });
+    
+            // Crear una instancia de TareaClass
+            const tareaClass = new TareaClass(desc, usuarioId);
+            const tarea = await tareaClass.guardar(); // Guarda la tarea en la DB
+            this._listado[tarea.id] = tarea.get({ plain: true }); // Agrega a la lista en memoria
+    
+            console.log(green('Tarea creada con éxito:', tarea));
+        } catch (error) {
+            console.error(red('Error al crear la tarea:'), error.message);
+        }
     }
 
-    /* Se guarda toda la información de la nueva tarea en un
-    objeto dónde la clave es el id. */
-    crearTarea(desc = '', usuarioId) {
-        const tarea = new Tarea(desc);
-        tarea.usuarioId = usuarioId; // asignar el id del usuario a la tarea
-        this._listado[tarea.id] = tarea;
+    // Guardar tareas en la base de datos
+    async guardarTareasDB() {
+        for (const tarea of this.listadoArr) {
+            await Tarea.upsert(tarea); // Actualiza o inserta la tarea
+        }
     }
 
+    // Borrar una tarea
+    async borrarTarea(id = "") {
+        if (this._listado[id]) {
+            try {
+                await Tarea.destroy({ where: { id } }); // Borrar de la DB
+                delete this._listado[id]; // Eliminar de la lista en memoria
+                console.log(green(`Tarea ${id} borrada con éxito.`));
+            } catch (error) {
+                console.error(red('Error al borrar la tarea:'), error.message);
+            }
+        } else {
+            console.log(red('Tarea no encontrada.'));
+        }
+    }
+
+    // Filtrar tareas por usuario
     filtrarTareasPorUsuario(usuarioId) {
         return this.listadoArr.filter(tarea => tarea.usuarioId === usuarioId);
     }
 
-    /* Mustra el listado completo solo con las
-    propiedades de la descripción de la tarea y 
-    el estado de esta.
-    Se genera un número para cada tarea (iteración)
-    y luego desenglosa tareas en desc y en el esstado 
-    para poder usarlo luego.
-    Dependiendo del estado se encontrará un texto de completado
-    o pendiente con los colores verde y rojo respectivamente*/
+    // Listar todas las tareas de un usuario
     listadoCompleto(usuarioId) {
         console.log();
-        const tareasUsuario = this.filtrarTareasPorUsuario(usuarioId); // Filtrar tareas por usuario
-
+        const tareasUsuario = this.filtrarTareasPorUsuario(usuarioId);
         tareasUsuario.forEach((tarea, i) => {
             const idx = `${i + 1}.`.green;
             const { desc, completadoEn } = tarea;
@@ -73,24 +92,22 @@ class Tareas {
         });
     }
 
-    
+    // Listar tareas completadas o pendientes
     listarPendientesCompletadas(completadas = true, usuarioId) {
         console.log();
         let contador = 0;
-        const tareasUsuario = this.filtrarTareasPorUsuario(usuarioId); // Filtrar tareas por usuario
+        const tareasUsuario = this.filtrarTareasPorUsuario(usuarioId);
 
         tareasUsuario.forEach(tarea => {
             const { desc, completadoEn } = tarea;
             const estado = (completadoEn) ? 'Completada'.green : 'Pendiente'.red;
 
             if (completadas) {
-                // Mostrar completadas
                 if (completadoEn) {
                     contador += 1;
                     console.log(`${(contador + '.').green} ${desc} :: ${completadoEn.green}`);
                 }
             } else {
-                // Mostrar pendientes
                 if (!completadoEn) {
                     contador += 1;
                     console.log(`${(contador + '.').green} ${desc} :: ${estado}`);
@@ -99,24 +116,27 @@ class Tareas {
         });
     }
 
-    toggleCompletadas( ids = [] ) {
-
-        ids.forEach( id => {
-
-            const tarea = this._listado[id];
-            if ( !tarea.completadoEn ) {
-                tarea.completadoEn = new Date().toISOString()
+    // Cambiar el estado de completadas
+    async toggleCompletadas(ids = []) {
+        try {
+            for (const id of ids) {
+                const tarea = this._listado[id];
+                if (tarea && !tarea.completadoEn) {
+                    tarea.completadoEn = new Date().toISOString();
+                    await Tarea.update({ completadoEn: tarea.completadoEn }, { where: { id } }); // Actualiza en la DB
+                }
             }
 
-        });
-
-        this.listadoArr.forEach( tarea => {
-            /* Si en el arreglo de ids no existe la tarea,
-            el estado se vuelve en false */
-            if ( !ids.includes(tarea.id) ){
-                this._listado[tarea.id].completadoEn = false;
+            // Actualizar las tareas no seleccionadas a no completadas
+            for (const tarea of this.listadoArr) {
+                if (!ids.includes(tarea.id)) {
+                    tarea.completadoEn = null; // O puedes dejarlo como false
+                    await Tarea.update({ completadoEn: null }, { where: { id: tarea.id } }); // Actualiza en la DB
+                }
             }
-        });
+        } catch (error) {
+            console.error(red('Error al cambiar el estado de las tareas:'), error.message);
+        }
     }
 }
 
