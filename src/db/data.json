@@ -1,0 +1,16 @@
+{
+  "usuarios": [
+    {
+      "nombre": "Hola",
+      "password": "Hola"
+    }
+  ],
+  "tareas": [
+    {
+      "id": "349b80a6-b058-4e00-bef1-1327644829dc",
+      "desc": "Hola",
+      "completadoEn": null,
+      "usuarioId": "Hola"
+    }
+  ]
+}
